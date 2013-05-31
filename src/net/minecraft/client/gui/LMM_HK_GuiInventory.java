@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.entity.LMM_EntityLittleMaid;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.src.LMM_EntityLittleMaid;
+import net.minecraft.src.LMM_GuiInventory;
 
 import org.lwjgl.opengl.GL11;
 
@@ -46,6 +47,7 @@ public class LMM_HK_GuiInventory extends LMM_GuiInventory {
 			ItemStack itemstack = slot1.getStack();
 			if (itemstack == null
 					|| itemstack.itemID != Item.sign.itemID) {
+				endDrawScreen();
 				return;
 			}
 			@SuppressWarnings("unchecked")
@@ -125,9 +127,7 @@ public class LMM_HK_GuiInventory extends LMM_GuiInventory {
 				itemRenderer.zLevel = 0.0F;
 			}
 		}
-		GL11.glPopMatrix();
-		GL11.glEnable(GL11.GL_LIGHTING);
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		endDrawScreen();
 	}
 
 	public List<String> getTeachingInfo() {
@@ -160,6 +160,12 @@ public class LMM_HK_GuiInventory extends LMM_GuiInventory {
 		}
 
 		return list;
+	}
+
+	private void endDrawScreen() {
+		GL11.glPopMatrix();
+		GL11.glEnable(GL11.GL_LIGHTING);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
 
 	/**
