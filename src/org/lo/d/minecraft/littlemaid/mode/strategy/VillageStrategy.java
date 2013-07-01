@@ -2,6 +2,7 @@ package org.lo.d.minecraft.littlemaid.mode.strategy;
 
 import java.util.List;
 
+import net.minecraft.command.IEntitySelector;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
@@ -33,9 +34,13 @@ public interface VillageStrategy extends Strategy {
 
 	public List<MaidExIcon> getIcons();
 
+	public IEntitySelector getMaidSelector();
+
 	public AxisAlignedBB getMyArea();
 
 	public List<EntityVillager> getMyVillagers();
+
+	public List<String> getTeachingInfo();
 
 	public int getVillagerCount();
 }

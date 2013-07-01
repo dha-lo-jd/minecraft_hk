@@ -39,7 +39,7 @@ public class HKEscorterStrategy extends HKMaidStateStrategy.Impl {
 					return false;
 				}
 				LMM_EntityLittleMaid maid = (LMM_EntityLittleMaid) entity;
-				return maid.isMaidContract();
+				return maid.isContract() && mode.owner.mstatMasterEntity == maid.mstatMasterEntity;
 			}
 		};
 	}

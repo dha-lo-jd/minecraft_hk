@@ -1,4 +1,4 @@
-package org.lo.d.minecraft.littlemaid.gui;
+package net.minecraft.client.gui.inventory;
 
 import static org.lo.d.commons.gui.FontRendererConstants.*;
 
@@ -125,7 +125,7 @@ public class GuiHKInventory extends LMM_GuiInventory {
 	@Override
 	public void initGui() {
 		super.initGui();
-		if (mc.currentScreen == this) {
+		if (mc.currentScreen == this && !owner.isInitializing) {
 			mc.displayGuiScreen(owner);
 		}
 	}

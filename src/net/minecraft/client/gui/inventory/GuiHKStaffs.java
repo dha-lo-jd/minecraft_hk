@@ -1,16 +1,20 @@
-package org.lo.d.minecraft.littlemaid.gui;
+package net.minecraft.client.gui.inventory;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderEngine;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityModeBase;
+import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.src.MMM_TextureBox;
 import net.minecraft.src.MMM_TextureManager;
 import net.minecraft.util.StatCollector;
@@ -124,7 +128,7 @@ public class GuiHKStaffs extends GuiContainer {
 					safetyGL.disable(GL11.GL_DEPTH_TEST);
 					safetyGL.enable(GL11.GL_TEXTURE_2D);
 
-					if (maid.isMaidContract()) {
+					if (maid.isContract()) {
 						// LP/AP
 						renderEngine.bindTexture("/gui/icons.png");
 						GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -164,7 +168,7 @@ public class GuiHKStaffs extends GuiContainer {
 
 					FontRenderer fontRenderer = RenderManager.instance.getFontRenderer();
 
-					if (maid.isMaidContract()) {
+					if (maid.isContract()) {
 						fontRenderer.drawStringWithShadow(StatCollector.translateToLocal("littleMaidMob.text.Health"),
 								x + 10, y + 78, 0xffffff);
 					}
@@ -182,7 +186,7 @@ public class GuiHKStaffs extends GuiContainer {
 
 				}
 			});
-			if (maid.isMaidContract()) {
+			if (maid.isContract()) {
 				SafetyGL.safetyGLProcess(new SafetyGL.Processor() {
 
 					@Override
@@ -227,11 +231,17 @@ public class GuiHKStaffs extends GuiContainer {
 	private final GuiHKTab owner;
 
 	public final LMM_EntityLittleMaid entitylittlemaid;
+	public final LMM_EntityMode_HouseKeeper mode;
+
 	private final GridHelper<LMM_EntityLittleMaid> gridHelper;
 
 	private final ScrollHelper scrollHelper;
 
-	public GuiHKStaffs(EntityPlayer player, LMM_EntityLittleMaid entitylittlemaid, final GuiHKTab owner) {
+	private Comparator<LMM_EntityLittleMaid> currentMaidSorter;
+	private Comparator<LMM_EntityLittleMaid> prevMaidSorter;
+
+	public GuiHKStaffs(EntityPlayer player, LMM_EntityLittleMaid entitylittlemaid, final GuiHKTab owner,
+			LMM_EntityMode_HouseKeeper mode) {
 		super(new Container() {
 			@Override
 			public boolean canInteractWith(EntityPlayer entityplayer) {
@@ -240,6 +250,7 @@ public class GuiHKStaffs extends GuiContainer {
 		});
 		this.owner = owner;
 		this.entitylittlemaid = entitylittlemaid;
+		this.mode = mode;
 		ySize = 207;
 		gridHelper = new GridHelper<>(2, 2);
 		scrollHelper = new ScrollHelper(140, "/gui/scroll_bar.png", "/gui/scroll_bar_bg.png");
@@ -263,6 +274,15 @@ public class GuiHKStaffs extends GuiContainer {
 				}
 			}
 		});
+
+	}
+
+	@Override
+	public void actionPerformed(GuiButton par1GuiButton) {
+		if (par1GuiButton instanceof GuiButtonHKStaffsSorter) {
+			GuiButtonHKStaffsSorter buttonHKStaffsSorter = (GuiButtonHKStaffsSorter) par1GuiButton;
+			setCurrentMaidSorter(buttonHKStaffsSorter.getMaidComparator());
+		}
 	}
 
 	@Override
@@ -292,23 +312,121 @@ public class GuiHKStaffs extends GuiContainer {
 	public void drawScreen(final int mx, final int my, float f) {
 		scrollHelper.updateOnDrawScreen(mx, my);
 		gridHelper.clearItems();
-		for (Object o : entitylittlemaid.worldObj.loadedEntityList) {
-			Entity e = (Entity) o;
-			if (e instanceof LMM_EntityLittleMaid) {
-				gridHelper.addItem((LMM_EntityLittleMaid) e);
+
+		List<LMM_EntityLittleMaid> maids = mode.strategyHelper.getCurrentStrategy().getMyMaids();
+		maids.add(entitylittlemaid);
+
+		Collections.sort(maids, new Comparator<LMM_EntityLittleMaid>() {
+			@Override
+			public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
+				int compare = currentMaidSorter.compare(o1, o2);
+				if (compare == 0) {
+					compare = prevMaidSorter.compare(o1, o2);
+				}
+				if (compare == 0) {
+					if (o1.isContract()) {
+						if (!o2.isContract()) {
+							compare = -1;
+						}
+					} else {
+						if (o2.isContract()) {
+							compare = 1;
+						}
+					}
+				}
+				return compare;
 			}
-		}
+		});
+
+		gridHelper.addItems(maids);
 		gridHelper.scrollTo(scrollHelper.getCurrentScrollRate());
 		super.drawScreen(mx, my, f);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void initGui() {
 		super.initGui();
-		if (mc.currentScreen == this) {
+		if (mc.currentScreen == this && !owner.isInitializing) {
 			mc.displayGuiScreen(owner);
 		}
 		scrollHelper.updateScrollRect(POINT_SCROLL_BAR_RELATIVE.addX(guiLeft).addY(guiTop));
+
+		currentMaidSorter = new Comparator<LMM_EntityLittleMaid>() {
+			@Override
+			public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
+				if (o1.func_94056_bM()) {
+					if (o2.func_94056_bM()) {
+						return o1.func_94057_bL().compareTo(o2.func_94057_bL());
+					} else {
+						return -1;
+					}
+				} else {
+					if (o2.func_94056_bM()) {
+						return 1;
+					}
+				}
+				return 0;
+			}
+		};
+		prevMaidSorter = new Comparator<LMM_EntityLittleMaid>() {
+			@Override
+			public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
+				if (o1.isContract()) {
+					if (o2.isContract()) {
+						return o1.getMaidModeString(o1.getMaidModeInt()).compareTo(
+								o2.getMaidModeString(o2.getMaidModeInt()));
+					} else {
+						return -1;
+					}
+				} else {
+					if (o2.isContract()) {
+						return 1;
+					}
+				}
+				return 0;
+			}
+		};
+		buttonList.add(new GuiButtonHKStaffsSorter(0, guiLeft - 50, guiTop + 4, "N", currentMaidSorter));
+		buttonList.add(new GuiButtonHKStaffsSorter(0, guiLeft - 50, guiTop + 24, "J", prevMaidSorter));
+		buttonList.add(new GuiButtonHKStaffsSorter(0, guiLeft - 50, guiTop + 44, "M",
+				new Comparator<LMM_EntityLittleMaid>() {
+					@Override
+					public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
+						return getValue(o2) - getValue(o1);
+					}
+
+					private int getValue(LMM_EntityLittleMaid maid) {
+						if (!maid.isContract()) {
+							return 0;
+						}
+						if (maid.isMaidWait()) {
+							return 1;
+						}
+						if (maid.isTracer()) {
+							return 2;
+						}
+						if (maid.isFreedom()) {
+							return 3;
+						}
+						return 4;
+					}
+				}));
+		buttonList.add(new GuiButtonHKStaffsSorter(0, guiLeft - 50, guiTop + 64, "D",
+				new Comparator<LMM_EntityLittleMaid>() {
+					@Override
+					public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
+						double dist1 = o1.getDistanceSqToEntity(mc.thePlayer);
+						double dist2 = o2.getDistanceSqToEntity(mc.thePlayer);
+						double d = dist1 - dist2;
+						return (int) d;
+					}
+				}));
+	}
+
+	private void setCurrentMaidSorter(Comparator<LMM_EntityLittleMaid> sorter) {
+		prevMaidSorter = currentMaidSorter;
+		currentMaidSorter = sorter;
 	}
 
 }

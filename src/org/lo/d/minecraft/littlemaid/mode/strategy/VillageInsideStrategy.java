@@ -1,5 +1,8 @@
 package org.lo.d.minecraft.littlemaid.mode.strategy;
 
+import static org.lo.d.commons.gui.FontRendererConstants.Color.*;
+import static org.lo.d.commons.gui.FontRendererConstants.Style.*;
+
 import java.util.List;
 
 import net.minecraft.command.IEntitySelector;
@@ -20,7 +23,9 @@ import org.lo.d.commons.coords.Point2D;
 import org.lo.d.commons.coords.Point2DMatrixSupport;
 import org.lo.d.commons.coords.Point3D;
 import org.lo.d.commons.coords.Point3DDouble;
+import org.lo.d.minecraft.littlemaid.HouseKeeper;
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
+import org.lo.d.minecraft.littlemaid.entity.BaseEntityLittleMaidEx;
 import org.lo.d.minecraft.littlemaid.network.HKVillageInfoPacketHandler;
 import org.lo.d.minecraft.littlemaid.network.HKVillageInfoPacketHandler.VillageInfo;
 
@@ -42,6 +47,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 
 			@Override
 			public List<EntityVillager> getMyVillagers() {
+				return Lists.newArrayList();
+			}
+
+			@Override
+			public List<String> getTeachingInfo() {
 				return Lists.newArrayList();
 			}
 
@@ -89,6 +99,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			}
 
 			@Override
+			public List<String> getTeachingInfo() {
+				return VillageInsideStrategy.this.getTeachingInfo(getVillagerCount(), getAdultVillagerCount());
+			}
+
+			@Override
 			public int getVillagerCount() {
 				return villageInfo.getVillagerCount();
 			}
@@ -124,6 +139,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		}
 
 		@Override
+		public List<String> getTeachingInfo() {
+			return currentDelegate.getTeachingInfo();
+		}
+
+		@Override
 		public int getVillagerCount() {
 			return currentDelegate.getVillagerCount();
 		}
@@ -151,6 +171,8 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		public AxisAlignedBB getMyArea();
 
 		public List<EntityVillager> getMyVillagers();
+
+		public List<String> getTeachingInfo();
 
 		public int getVillagerCount();
 
@@ -225,6 +247,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		}
 
 		@Override
+		public List<String> getTeachingInfo() {
+			return Lists.newArrayList();
+		}
+
+		@Override
 		public int getVillagerCount() {
 			return getMyVillagers().size();
 		}
@@ -232,6 +259,7 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		@Override
 		public void onUpdateStrategy() {
 			moveVillageCenter();
+			teachingUpdate();
 
 		}
 
@@ -349,6 +377,31 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 				maid.setHomeArea(pos.getX(), pos.getY(), pos.getZ(), maid.dimension);
 			}
 		}
+
+		private void teachingUpdate() {
+			int adultVillagerCount = 0;
+			List<EntityVillager> villagerList = getMyVillagers();
+			for (EntityVillager villager : villagerList) {
+				if (villager.getGrowingAge() >= 0) {
+					adultVillagerCount++;
+				}
+			}
+
+			int maidCount = mode.strategyHelper.getCurrentStrategy().getMaidsCount();
+			boolean flag = canTeach(maidCount, adultVillagerCount);
+
+			for (EntityVillager villager : villagerList) {
+				if (flag && -100 < villager.getGrowingAge() && villager.getGrowingAge() < 0) {
+					World world = villager.worldObj;
+					BaseEntityLittleMaidEx newMaid = new BaseEntityLittleMaidEx(world);
+					newMaid.setPositionAndRotation(villager.posX, villager.posY, villager.posZ, villager.rotationYaw,
+							villager.rotationPitch);
+					world.spawnEntityInWorld(newMaid);
+					world.removeEntity(villager);
+					flag = canTeach(maidCount, adultVillagerCount);
+				}
+			}
+		}
 	}
 
 	private Village villageObj;
@@ -393,6 +446,23 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 	}
 
 	@Override
+	public IEntitySelector getMaidSelector() {
+		return new IEntitySelector() {
+			@Override
+			public boolean isEntityApplicable(Entity entity) {
+				if (entity == mode.owner) {
+					return false;
+				}
+				if (!(entity instanceof LMM_EntityLittleMaid)) {
+					return false;
+				}
+				LMM_EntityLittleMaid maid = (LMM_EntityLittleMaid) entity;
+				return !maid.isContract() || mode.owner.mstatMasterEntity == maid.mstatMasterEntity;
+			}
+		};
+	}
+
+	@Override
 	public AxisAlignedBB getMyArea() {
 		return currentDelegate.getMyArea();
 	}
@@ -400,6 +470,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 	@Override
 	public List<EntityVillager> getMyVillagers() {
 		return currentDelegate.getMyVillagers();
+	}
+
+	@Override
+	public List<String> getTeachingInfo() {
+		return currentDelegate.getTeachingInfo();
 	}
 
 	public VillageInfo getVillageInfo() {
@@ -424,6 +499,43 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 	@Override
 	public boolean shouldStrategy() {
 		return currentDelegate.shouldStrategy();
+	}
+
+	private boolean canTeach(int adultVillagerCount, int maidCount) {
+		boolean flag = false;
+		if (adultVillagerCount > 0) {
+			flag = (int) getMaidRate(adultVillagerCount) > maidCount;
+		}
+		return flag;
+	}
+
+	private double getMaidRate(int adultVillagerCount) {
+		double rate = HouseKeeper.teachRate / 100D;
+		double maidRatio = adultVillagerCount * rate;
+		return maidRatio;
+	}
+
+	private List<String> getTeachingInfo(int villagerCount, int adultVillagerCount) {
+		List<String> list = Lists.newArrayList();
+
+		int maidCount = VillageInsideStrategy.this.mode.strategyHelper.getCurrentStrategy().getMaidsCount();
+		boolean flag = canTeach(maidCount, adultVillagerCount);
+
+		double rate = HouseKeeper.teachRate / 100D;
+
+		list.add("Maid: " + BOLD + maidCount);
+		list.add("Villager: " + BOLD + villagerCount);
+		list.add("Child: " + BOLD + (villagerCount - adultVillagerCount));
+		if (!flag) {
+			double n = maidCount + 1 - getMaidRate(adultVillagerCount);
+			n = n / rate;
+			list.add(RED + "NeedToTeach: " + BOLD + (int) n);
+		} else {
+			int n = (int) getMaidRate(adultVillagerCount) - maidCount;
+			list.add(GREEN + "CanTeach: " + BOLD + n);
+		}
+
+		return list;
 	}
 
 	protected IEntitySelector getVillagerSelector() {

@@ -1,10 +1,12 @@
-package org.lo.d.minecraft.littlemaid.gui;
+package net.minecraft.client.gui.inventory;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 
 import org.lo.d.commons.gui.ContainerTab;
+import org.lo.d.minecraft.littlemaid.gui.GuiMaidExContainer;
+import org.lo.d.minecraft.littlemaid.gui.GuiMaidExContainer.MaidExTabEntry;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -16,6 +18,6 @@ public class GuiHKTab extends GuiMaidExContainer {
 		GuiHKInventory lmm_GuiInventory = new GuiHKInventory(player, maid, this, mode);
 		screen = lmm_GuiInventory;
 		add(new MaidExTabEntry(this, lmm_GuiInventory, entitylittlemaid, "/gui/tab_maid.png"));
-		add(new MaidExTabEntry(this, new GuiHKStaffs(player, maid, this), entitylittlemaid, "/gui/icon_maids.png"));
+		add(new MaidExTabEntry(this, new GuiHKStaffs(player, maid, this, mode), entitylittlemaid, "/gui/icon_maids.png"));
 	}
 }

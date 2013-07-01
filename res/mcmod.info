@@ -1,13 +1,11 @@
-{
-  "modinfoversion": 2,
-  "modlist": [{
-    "modid": "LMMExtension",
-    "name": "Kawo LMM Extension",
+[{
+    "modid": "LMM_EntityMode_HouseKeeper",
+    "name": "LMM Mode HouseKeeper",
     "version": "0.0.1",
     "mcversion": "1.5.2",
     "authors": [ "dhs_lo_jd" ],
-    "requiredMods": [ "Forge", "mod_LMM_littleMaidMob" ],
-    "dependencies": [ "mod_LMM_littleMaidMob" ],
+    "parent": "LMMExtension",
+    "requiredMods": [ "LMMExtension" ],
+    "dependencies": [ "LMMExtension" ],
     "useDependencyInformation": "true"
   }]
-}

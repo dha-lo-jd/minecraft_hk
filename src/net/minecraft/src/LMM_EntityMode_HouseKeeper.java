@@ -3,16 +3,15 @@ package net.minecraft.src;
 import java.util.List;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiHKTab;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.src.LMM_EntityMode_AcceptBookCommand.ModeAlias;
-import net.minecraft.village.Village;
 
 import org.lo.d.minecraft.littlemaid.LMMExtension;
 import org.lo.d.minecraft.littlemaid.LittleMaidModeConfiguration;
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
-import org.lo.d.minecraft.littlemaid.gui.GuiHKTab;
 import org.lo.d.minecraft.littlemaid.mode.LMM_EntityModeBaseEx;
 import org.lo.d.minecraft.littlemaid.mode.strategy.HKEscorterStrategy;
 import org.lo.d.minecraft.littlemaid.mode.strategy.HKFreedomStrategy;
@@ -30,8 +29,6 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 
 	@LittleMaidModeConfiguration.ResolveModeId(modeName = MODE_NAME)
 	public static int MODE_ID = 0x0201;
-
-	private Village villageObj;
 
 	public final StrategyUserHelper<HKMaidStateStrategy> strategyHelper;
 	public final StrategyUserHelper<VillageStrategy> villageStrategyHelper;
@@ -84,7 +81,12 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 	@Override
 	public void init() {
 		// 登録モードの名称追加
-		addLocalization(MODE_NAME);
+		addLocalization(MODE_NAME, new JPNameProvider() {
+			@Override
+			public String getLocalization() {
+				return "メイド長";
+			}
+		});
 		LMM_EntityMode_AcceptBookCommand.add(new ModeAlias(MODE_ID, MODE_NAME, "Hk"));
 	}
 
@@ -95,6 +97,7 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 			villageStrategyHelper.updateCurrentStrategy();
 
 			strategyHelper.getCurrentStrategy().onUpdateStrategy();
+
 		}
 	}
 
@@ -114,6 +117,7 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 	@Override
 	public void updateAITick(int pMode) {
 		if (pMode == MODE_ID) {
+
 			//			LMM_EntityLittleMaid maid = owner;
 			//			Village village = maid.worldObj.villageCollectionObj.findNearestVillage(MathHelper.floor_double(maid.posX),
 			//					MathHelper.floor_double(maid.posY), MathHelper.floor_double(maid.posZ), 32);
