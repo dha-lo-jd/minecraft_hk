@@ -33,9 +33,6 @@ public class GuiHKInventory extends LMM_GuiInventory {
 		final int i = guiLeft;
 		final int j = guiTop;
 
-		if (entitylittlemaid.maidInventory.currentItem < 0) {
-			return;
-		}
 		SafetyGL.safetyGLProcess(new SafetyGL.Processor() {
 			@Override
 			public void process(SafetyGL safetyGL) {
@@ -45,9 +42,16 @@ public class GuiHKInventory extends LMM_GuiInventory {
 				safetyGL.disableStandardItemLighting();
 				safetyGL.disable(GL11.GL_DEPTH_TEST);
 
-				Slot slot1 = (Slot) inventorySlots.inventorySlots.get(entitylittlemaid.maidInventory.currentItem);
-				if (isMouseOverSlot(slot1, mx, my)) {
-					ItemStack itemstack = slot1.getStack();
+				Slot slot = null;
+				for (Object o : inventorySlots.inventorySlots) {
+					Slot s = (Slot) o;
+					if (isMouseOverSlot(s, mx, my)) {
+						slot = s;
+					}
+
+				}
+				if (slot != null && entitylittlemaid.maidInventory.mainInventory.length > slot.slotNumber) {
+					ItemStack itemstack = slot.getStack();
 					if (itemstack == null || itemstack.itemID != Item.paper.itemID) {
 						return;
 					}
