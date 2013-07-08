@@ -8,7 +8,11 @@ import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.src.LMM_EntityMode_AcceptBookCommand.ModeAlias;
+import net.minecraft.world.World;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
+import org.lo.d.minecraft.littlemaid.HKVillageGuardSpawnEventHandler;
 import org.lo.d.minecraft.littlemaid.LMMExtension;
 import org.lo.d.minecraft.littlemaid.LittleMaidModeConfiguration;
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
@@ -25,6 +29,39 @@ import com.google.common.collect.Lists;
 
 @LittleMaidModeConfiguration
 public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
+	public class Handler implements HKVillageGuardSpawnEventHandler.Handler {
+
+		@Override
+		public void doHandle(EnderTeleportEvent event) {
+			strategyHelper.getCurrentStrategy().doVillageGuard(event);
+		}
+
+		@Override
+		public void doHandle(EntityJoinWorldEvent event) {
+			strategyHelper.getCurrentStrategy().doVillageGuard(event);
+		}
+
+		@Override
+		public World getWorld() {
+			return owner.worldObj;
+		}
+
+		@Override
+		public boolean isLiving() {
+			return !owner.isDead;
+		}
+
+		@Override
+		public boolean shouldHandle(EnderTeleportEvent event) {
+			return strategyHelper.getCurrentStrategy().shouldVillageGuard(event);
+		}
+
+		@Override
+		public boolean shouldHandle(EntityJoinWorldEvent event) {
+			return strategyHelper.getCurrentStrategy().shouldVillageGuard(event);
+		}
+	}
+
 	public static final String MODE_NAME = "HouseKeeper";
 
 	@LittleMaidModeConfiguration.ResolveModeId(modeName = MODE_NAME)
@@ -39,6 +76,10 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 		villageStrategyHelper.add(new VillageInsideStrategy(this));
 		strategyHelper = new StrategyUserHelper<>(new HKEscorterStrategy(this));
 		strategyHelper.add(new HKFreedomStrategy(this, villageStrategyHelper));
+
+		if (owner != null && owner.worldObj != null) {
+			HKVillageGuardSpawnEventHandler.regist(new Handler());
+		}
 	}
 
 	@Override
@@ -88,6 +129,7 @@ public class LMM_EntityMode_HouseKeeper extends LMM_EntityModeBaseEx {
 			}
 		});
 		LMM_EntityMode_AcceptBookCommand.add(new ModeAlias(MODE_ID, MODE_NAME, "Hk"));
+
 	}
 
 	@Override

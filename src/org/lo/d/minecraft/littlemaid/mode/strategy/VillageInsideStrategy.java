@@ -4,17 +4,24 @@ import static org.lo.d.commons.gui.FontRendererConstants.Color.*;
 import static org.lo.d.commons.gui.FontRendererConstants.Style.*;
 
 import java.util.List;
+import java.util.Set;
 
 import net.minecraft.command.IEntitySelector;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.src.LMM_EntityLittleMaid;
+import net.minecraft.src.LMM_EntityMode_Archer;
+import net.minecraft.src.LMM_EntityMode_Fencer;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
+import net.minecraft.src.LMM_IFF;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraft.village.Village;
 import net.minecraft.village.VillageDoorInfo;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import org.lo.d.commons.coords.EntityCoordsSupport;
 import org.lo.d.commons.coords.EntityPoint3DDouble;
@@ -23,6 +30,7 @@ import org.lo.d.commons.coords.Point2D;
 import org.lo.d.commons.coords.Point2DMatrixSupport;
 import org.lo.d.commons.coords.Point3D;
 import org.lo.d.commons.coords.Point3DDouble;
+import org.lo.d.commons.coords.Rect2D;
 import org.lo.d.minecraft.littlemaid.HouseKeeper;
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
 import org.lo.d.minecraft.littlemaid.entity.BaseEntityLittleMaidEx;
@@ -30,6 +38,7 @@ import org.lo.d.minecraft.littlemaid.network.HKVillageInfoPacketHandler;
 import org.lo.d.minecraft.littlemaid.network.HKVillageInfoPacketHandler.VillageInfo;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class VillageInsideStrategy extends VillageStrategy.Impl {
 	private class ClientDelegate implements Delegate {
@@ -53,6 +62,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			@Override
 			public List<String> getTeachingInfo() {
 				return Lists.newArrayList();
+			}
+
+			@Override
+			public Point3D getVillagerCenter() {
+				return null;
 			}
 
 			@Override
@@ -82,8 +96,8 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			public AxisAlignedBB getMyArea() {
 				Point3D vc = villageInfo.getVillageCenter();
 				int r = villageInfo.getVillageRadius();
-				return AxisAlignedBB.getAABBPool().getAABB(vc.getX() - r, vc.getY() - 4, vc.getZ() - r, vc.getX() + r,
-						vc.getY() + 4, vc.getZ() + r);
+				return AxisAlignedBB.getAABBPool().getAABB(vc.getX() - r, vc.getY() - 16, vc.getZ() - r, vc.getX() + r,
+						vc.getY() + 16, vc.getZ() + r);
 			}
 
 			@Override
@@ -101,6 +115,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			@Override
 			public List<String> getTeachingInfo() {
 				return VillageInsideStrategy.this.getTeachingInfo(getVillagerCount(), getAdultVillagerCount());
+			}
+
+			@Override
+			public Point3D getVillagerCenter() {
+				return villageInfo.getVillageCenter();
 			}
 
 			@Override
@@ -144,6 +163,11 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		}
 
 		@Override
+		public Point3D getVillagerCenter() {
+			return currentDelegate.getVillagerCenter();
+		}
+
+		@Override
 		public int getVillagerCount() {
 			return currentDelegate.getVillagerCount();
 		}
@@ -173,6 +197,8 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		public List<EntityVillager> getMyVillagers();
 
 		public List<String> getTeachingInfo();
+
+		public Point3D getVillagerCenter();
 
 		public int getVillagerCount();
 
@@ -229,10 +255,10 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			if (villageObj == null) {
 				return mode.owner.boundingBox;
 			}
-			Point3D vc = new Point3D(villageObj.getCenter());
+			Point3D vc = getVillagerCenter();
 			int r = villageObj.getVillageRadius();
-			return AxisAlignedBB.getAABBPool().getAABB(vc.getX() - r, vc.getY() - 4, vc.getZ() - r, vc.getX() + r,
-					vc.getY() + 4, vc.getZ() + r);
+			return AxisAlignedBB.getAABBPool().getAABB(vc.getX() - r, vc.getY() - 16, vc.getZ() - r, vc.getX() + r,
+					vc.getY() + 16, vc.getZ() + r);
 		}
 
 		@Override
@@ -249,6 +275,12 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		@Override
 		public List<String> getTeachingInfo() {
 			return Lists.newArrayList();
+		}
+
+		@Override
+		public Point3D getVillagerCenter() {
+			Point3D vc = new Point3D(villageObj.getCenter());
+			return vc;
 		}
 
 		@Override
@@ -351,7 +383,7 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 			final LMM_EntityLittleMaid maid = mode.owner;
 			EntityPoint3DDouble entityPoint3DDouble = new EntityPoint3DDouble(maid);
 
-			Point3D vc = villageInfo.getVillageCenter();
+			Point3D vc = getVillagerCenter();
 			int r = villageObj.getVillageRadius();
 			Point3D center = getSafetyVillageCenter(maid, vc, r);
 			if (center != null) {
@@ -412,6 +444,9 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 
 	private Delegate currentDelegate;
 
+	private static Set<Integer> villageGuardModeIds = Sets.newHashSet(LMM_EntityMode_Fencer.mmode_Fencer,
+			LMM_EntityMode_Archer.mmode_Archer);
+
 	public VillageInsideStrategy(LMM_EntityMode_HouseKeeper mode) {
 		super(mode);
 		villagerIcon = new HKVillagerIcon(this);
@@ -431,6 +466,56 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		} else {
 			currentDelegate = new ServerDelegate();
 		}
+	}
+
+	public boolean doShouldVillageGuard(EntityEvent event) {
+		Entity entity = event.entity;
+		int tt = LMM_IFF.getIFF(mode.owner.getMaidMaster(), entity);
+		if (tt != LMM_IFF.iff_Enemy) {
+			return false;
+		}
+
+		int guardCount = 0;
+		for (LMM_EntityLittleMaid littleMaid : mode.strategyHelper.getCurrentStrategy().getMyMaids()) {
+			int modeId = littleMaid.getMaidModeInt();
+			if (villageGuardModeIds.contains(modeId) && littleMaid.isContractEX() && littleMaid.isFreedom()) {
+				guardCount++;
+			}
+		}
+
+		if (guardCount < 3) {
+			return false;
+		}
+
+		int range = (int) MathHelper.sqrt_double(guardCount * 256D);
+
+		Point3D vc = currentDelegate.getVillagerCenter();
+		EntityPoint3DInt spawnPos = new EntityPoint3DInt(entity);
+
+		int spawnY = spawnPos.getY();
+		if (spawnY < vc.getY() - range || vc.getY() + range < spawnY) {
+			return false;
+		}
+
+		Rect2D rect = new Rect2D(vc.getPoint2d().addX(-range).addY(-range), vc.getPoint2d().addX(range).addY(range));
+
+		if (!rect.isInRect(spawnPos.getPoint2d())) {
+			return false;
+		}
+
+		return true;
+
+	}
+
+	@Override
+	public void doVillageGuard(EnderTeleportEvent event) {
+		event.setCanceled(true);
+	}
+
+	@Override
+	public void doVillageGuard(EntityJoinWorldEvent event) {
+		event.entity.setDead();
+		event.setCanceled(true);
 	}
 
 	@Override
@@ -499,6 +584,16 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 	@Override
 	public boolean shouldStrategy() {
 		return currentDelegate.shouldStrategy();
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EnderTeleportEvent event) {
+		return doShouldVillageGuard(event);
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event) {
+		return doShouldVillageGuard(event);
 	}
 
 	private boolean canTeach(int adultVillagerCount, int maidCount) {

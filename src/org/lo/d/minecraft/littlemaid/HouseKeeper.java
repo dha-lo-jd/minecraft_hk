@@ -3,6 +3,7 @@ package org.lo.d.minecraft.littlemaid;
 import java.lang.reflect.InvocationTargetException;
 
 import net.minecraftforge.common.Configuration;
+import net.minecraftforge.common.MinecraftForge;
 
 import org.lo.d.commons.configuration.ConfigurationSupport;
 import org.lo.d.commons.configuration.ConfigurationSupport.IntConfig;
@@ -12,12 +13,11 @@ import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkMod;
-import cpw.mods.fml.common.registry.TickRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 
 @Mod(modid = "LMM_EntityMode_HouseKeeper", name = "LMM Mode HouseKeeper", version = "0.0.1")
-@NetworkMod(clientSideRequired = true, serverSideRequired = false, channels = { HouseKeeper.HK_VILLAGE_INFO_PACKET_NAME }, packetHandler = KawoCommonsPacketHandler.class)
+@NetworkMod(clientSideRequired = true, serverSideRequired = false, channels = {
+	HouseKeeper.HK_VILLAGE_INFO_PACKET_NAME
+}, packetHandler = KawoCommonsPacketHandler.class)
 @ConfigurationSupport.ConfigurationMod
 public class HouseKeeper {
 
@@ -27,17 +27,13 @@ public class HouseKeeper {
 	@IntConfig(defaultValue = 25, name = "teachRate")
 	public static int teachRate = 25;
 
-	@SideOnly(Side.SERVER)
-	public static HouseKeeperTickHandler tickHandler;
-
 	public static final String HK_VILLAGE_INFO_PACKET_NAME = "HKVillageInfo";
+
+	private static final HKVillageGuardSpawnEventHandler SPAWN_EVENT_HANDLER = new HKVillageGuardSpawnEventHandler();
 
 	@Mod.Init
 	public void init(FMLInitializationEvent event) {
-		if (event.getSide().isServer()) {
-			tickHandler = new HouseKeeperTickHandler();
-			TickRegistry.registerTickHandler(tickHandler, Side.SERVER);
-		}
+		MinecraftForge.EVENT_BUS.register(SPAWN_EVENT_HANDLER);
 	}
 
 	@Mod.PreInit

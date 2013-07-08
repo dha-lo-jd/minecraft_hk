@@ -6,7 +6,6 @@ import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 
 import org.lo.d.commons.gui.ContainerTab;
 import org.lo.d.minecraft.littlemaid.gui.GuiMaidExContainer;
-import org.lo.d.minecraft.littlemaid.gui.GuiMaidExContainer.MaidExTabEntry;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;

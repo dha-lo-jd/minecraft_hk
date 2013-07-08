@@ -6,6 +6,8 @@ import net.minecraft.command.IEntitySelector;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
 
@@ -30,6 +32,10 @@ public interface VillageStrategy extends Strategy {
 		}
 	}
 
+	public void doVillageGuard(EnderTeleportEvent event);
+
+	public void doVillageGuard(EntityJoinWorldEvent event);
+
 	public int getAdultVillagerCount();
 
 	public List<MaidExIcon> getIcons();
@@ -43,4 +49,8 @@ public interface VillageStrategy extends Strategy {
 	public List<String> getTeachingInfo();
 
 	public int getVillagerCount();
+
+	public boolean shouldVillageGuard(EnderTeleportEvent event);
+
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event);
 }

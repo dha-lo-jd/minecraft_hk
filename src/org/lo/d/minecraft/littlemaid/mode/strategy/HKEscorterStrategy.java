@@ -7,6 +7,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import com.google.common.collect.Lists;
 
@@ -14,6 +16,14 @@ public class HKEscorterStrategy extends HKMaidStateStrategy.Impl {
 
 	public HKEscorterStrategy(LMM_EntityMode_HouseKeeper mode) {
 		super(mode);
+	}
+
+	@Override
+	public void doVillageGuard(EnderTeleportEvent event) {
+	}
+
+	@Override
+	public void doVillageGuard(EntityJoinWorldEvent event) {
 	}
 
 	@Override
@@ -25,6 +35,16 @@ public class HKEscorterStrategy extends HKMaidStateStrategy.Impl {
 	public boolean shouldStrategy() {
 		LMM_EntityLittleMaid maid = mode.owner;
 		return !maid.isFreedom() && !maid.isMaidWait();
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EnderTeleportEvent event) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event) {
+		return false;
 	}
 
 	@Override

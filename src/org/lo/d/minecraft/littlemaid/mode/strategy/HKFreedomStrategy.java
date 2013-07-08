@@ -6,6 +6,8 @@ import net.minecraft.command.IEntitySelector;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
 
@@ -19,6 +21,16 @@ public class HKFreedomStrategy extends HKMaidStateStrategy.Impl {
 		super(mode);
 		this.helper = helper;
 		addDependencyStrategy(helper);
+	}
+
+	@Override
+	public void doVillageGuard(EnderTeleportEvent event) {
+		helper.getCurrentStrategy().doVillageGuard(event);
+	}
+
+	@Override
+	public void doVillageGuard(EntityJoinWorldEvent event) {
+		helper.getCurrentStrategy().doVillageGuard(event);
 	}
 
 	@Override
@@ -43,6 +55,16 @@ public class HKFreedomStrategy extends HKMaidStateStrategy.Impl {
 	public boolean shouldStrategy() {
 		LMM_EntityLittleMaid maid = mode.owner;
 		return maid.isFreedom() && !maid.isMaidWait();
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EnderTeleportEvent event) {
+		return helper.getCurrentStrategy().shouldVillageGuard(event);
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event) {
+		return helper.getCurrentStrategy().shouldVillageGuard(event);
 	}
 
 	@Override

@@ -6,6 +6,8 @@ import net.minecraft.command.IEntitySelector;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import org.lo.d.minecraft.littlemaid.MaidExIcon;
 
@@ -48,6 +50,10 @@ public interface HKMaidStateStrategy extends DependencyStrategy {//Stateなの�
 
 		private HKMaidsIcon maidsIcon;
 
+		long lastCachedTick = -1;
+
+		List<LMM_EntityLittleMaid> tickCachedMaids;
+
 		public Impl(LMM_EntityMode_HouseKeeper mode) {
 			this.mode = mode;
 			maidsIcon = new HKMaidsIcon(this);
@@ -70,12 +76,18 @@ public interface HKMaidStateStrategy extends DependencyStrategy {//Stateなの�
 		@Override
 		public List<LMM_EntityLittleMaid> getMyMaids() {
 			final LMM_EntityLittleMaid maid = mode.owner;
+			long tick = maid.worldObj.getWorldTime();
+			if (tick == lastCachedTick) {
+				return Lists.newArrayList(tickCachedMaids);
+			}
 			List<?> l = maid.worldObj.getEntitiesWithinAABBExcludingEntity(maid, getMyArea(), getMaidSelector());
 			List<LMM_EntityLittleMaid> list = Lists.newArrayList();
 			for (Object o : l) {
 				list.add((LMM_EntityLittleMaid) o);
 			}
-			return list;
+			lastCachedTick = tick;
+			tickCachedMaids = list;
+			return Lists.newArrayList(tickCachedMaids);
 		}
 
 		protected abstract IEntitySelector getMaidSelector();
@@ -87,6 +99,10 @@ public interface HKMaidStateStrategy extends DependencyStrategy {//Stateなの�
 		}
 	}
 
+	public void doVillageGuard(EnderTeleportEvent event);
+
+	public void doVillageGuard(EntityJoinWorldEvent event);
+
 	public List<MaidExIcon> getIcons();
 
 	public int getMaidsCount();
@@ -94,4 +110,8 @@ public interface HKMaidStateStrategy extends DependencyStrategy {//Stateなの�
 	public List<LMM_EntityLittleMaid> getMyMaids();
 
 	public List<String> getTeachingInfo();
+
+	public boolean shouldVillageGuard(EnderTeleportEvent event);
+
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event);
 }

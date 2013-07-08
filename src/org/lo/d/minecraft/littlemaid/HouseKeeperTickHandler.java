@@ -10,6 +10,10 @@ import com.google.common.collect.Sets;
 import cpw.mods.fml.common.ITickHandler;
 import cpw.mods.fml.common.TickType;
 
+/**
+ * @author dha_lo_jd
+ * まだ使ってない
+ */
 public class HouseKeeperTickHandler implements ITickHandler {
 
 	public interface MaidCollector extends PriorityComparable {

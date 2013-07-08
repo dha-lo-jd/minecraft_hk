@@ -7,6 +7,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
 import com.google.common.collect.Lists;
 
@@ -14,6 +16,14 @@ public class VillageOutsideStrategy extends VillageStrategy.Impl {
 
 	public VillageOutsideStrategy(LMM_EntityMode_HouseKeeper mode) {
 		super(mode);
+	}
+
+	@Override
+	public void doVillageGuard(EnderTeleportEvent event) {
+	}
+
+	@Override
+	public void doVillageGuard(EntityJoinWorldEvent event) {
 	}
 
 	@Override
@@ -55,6 +65,16 @@ public class VillageOutsideStrategy extends VillageStrategy.Impl {
 
 	@Override
 	public boolean shouldStrategy() {
+		return false;
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EnderTeleportEvent event) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldVillageGuard(EntityJoinWorldEvent event) {
 		return false;
 	}
 }
