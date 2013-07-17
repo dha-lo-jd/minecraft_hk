@@ -6,6 +6,7 @@ import net.minecraft.command.IEntitySelector;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 
@@ -16,6 +17,8 @@ import com.google.common.collect.Lists;
 public interface HKMaidStateStrategy extends DependencyStrategy {//StateなのにStrategyとかあたまおかしさある
 	public abstract class Impl extends DependencyStrategy.DefaultImpl implements HKMaidStateStrategy {
 		private static class HKMaidsIcon extends MaidExIcon {
+			private static final ResourceLocation ICON_MAIDS = new ResourceLocation("house_keeper",
+					"textures/gui/icon_maids.png");
 			private final Impl strategy;
 
 			public HKMaidsIcon(Impl strategy) {
@@ -41,8 +44,8 @@ public interface HKMaidStateStrategy extends DependencyStrategy {//Stateなの�
 			}
 
 			@Override
-			public String getTexture() {
-				return "/gui/icon_maids.png";
+			public ResourceLocation getTexture() {
+				return ICON_MAIDS;
 			}
 		}
 

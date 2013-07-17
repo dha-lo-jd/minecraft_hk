@@ -5,18 +5,22 @@ import java.util.Comparator;
 import java.util.List;
 
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.RenderEngine;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.src.LMM_EntityLittleMaid;
 import net.minecraft.src.LMM_EntityModeBase;
 import net.minecraft.src.LMM_EntityMode_HouseKeeper;
+import net.minecraft.src.LMM_GuiInventory;
 import net.minecraft.src.MMM_TextureBox;
 import net.minecraft.src.MMM_TextureManager;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 
 import org.lo.d.commons.coords.Point2D;
@@ -56,12 +60,12 @@ public class GuiHKStaffs extends GuiContainer {
 			final int x = drawPoint.getX();
 			final int y = drawPoint.getY();
 
-			boolean nameVisible = maid.func_94062_bN();
+			boolean nameVisible = maid.getAlwaysRenderNameTag();
 			boolean cached = RenderManager.instance.field_96451_i == maid;
 			if (cached) {
 				RenderManager.instance.field_96451_i = null;
 			}
-			maid.func_94061_f(false);
+			maid.setAlwaysRenderNameTag(false);
 			SafetyGL.safetyGLProcess(new SafetyGL.Processor() {
 				@Override
 				public void process(SafetyGL safetyGL) {
@@ -97,11 +101,11 @@ public class GuiHKStaffs extends GuiContainer {
 			if (cached) {
 				RenderManager.instance.field_96451_i = maid;
 			}
-			maid.func_94061_f(nameVisible);
+			maid.setAlwaysRenderNameTag(nameVisible);
 		}
 
 		private void drawMaidSlot(final Point2D drawPoint, final LMM_EntityLittleMaid maid) {
-			final RenderEngine renderEngine = drawHelper.getRenderEngine();
+			final TextureManager renderEngine = drawHelper.getRenderEngine();
 			final int x = drawPoint.getX();
 			final int y = drawPoint.getY();
 			SafetyGL.safetyGLProcess(new SafetyGL.Processor() {
@@ -130,16 +134,15 @@ public class GuiHKStaffs extends GuiContainer {
 
 					if (maid.isContract()) {
 						// LP/AP
-						renderEngine.bindTexture("/gui/icons.png");
+						renderEngine.func_110577_a(Gui.field_110324_m);
 						GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 						boolean flag1 = (maid.hurtResistantTime / 3) % 2 == 1;
 						if (maid.hurtResistantTime < 10) {
 							flag1 = false;
 						}
-						int i1 = maid.health;
-						int j1 = maid.prevHealth;
-
+						int i1 = MathHelper.ceiling_float_int(maid.func_110143_aJ());
+						int j1 = MathHelper.ceiling_float_int(maid.prevHealth);
 						for (int j2 = 0; j2 < 10; j2++) {
 							// LP
 							int k5 = 0;
@@ -174,8 +177,8 @@ public class GuiHKStaffs extends GuiContainer {
 					}
 
 					//名前
-					if (maid.func_94056_bM()) {
-						String name = maid.func_94057_bL();
+					if (maid.hasCustomNameTag()) {
+						String name = maid.getCustomNameTag();
 						fontRenderer.drawStringWithShadow(name, x + 10, y + 8, 0xffffff);
 					}
 
@@ -253,7 +256,7 @@ public class GuiHKStaffs extends GuiContainer {
 		this.mode = mode;
 		ySize = 207;
 		gridHelper = new GridHelper<>(2, 2);
-		scrollHelper = new ScrollHelper(140, "/gui/scroll_bar.png", "/gui/scroll_bar_bg.png");
+		scrollHelper = new ScrollHelper(140, ScrollHelper.DEFAULT_SCROLL_BAR, ScrollHelper.DEFAULT_SCROLL_BAR_BG);
 
 		owner.addMouseInputListner(new GuiHKTab.HandleInputListner() {
 
@@ -287,11 +290,12 @@ public class GuiHKStaffs extends GuiContainer {
 
 	@Override
 	public void drawDefaultBackground() {
-		String s = ((MMM_TextureBox) entitylittlemaid.textureBox[0]).getTextureName(MMM_TextureManager.tx_gui);
+		ResourceLocation s = ((MMM_TextureBox) entitylittlemaid.textureBox[0])
+				.getTextureName(MMM_TextureManager.tx_gui);
 		if (s == null) {
-			s = "/gui/littlemaidinventory.png";
+			s = LMM_GuiInventory.fguiTex;
 		}
-		mc.renderEngine.bindTexture(s);
+		mc.renderEngine.func_110577_a(s);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		int lj = guiLeft;
 		int lk = guiTop;
@@ -355,14 +359,14 @@ public class GuiHKStaffs extends GuiContainer {
 		currentMaidSorter = new Comparator<LMM_EntityLittleMaid>() {
 			@Override
 			public int compare(LMM_EntityLittleMaid o1, LMM_EntityLittleMaid o2) {
-				if (o1.func_94056_bM()) {
-					if (o2.func_94056_bM()) {
-						return o1.func_94057_bL().compareTo(o2.func_94057_bL());
+				if (o1.hasCustomNameTag()) {
+					if (o2.hasCustomNameTag()) {
+						return o1.getCustomNameTag().compareTo(o2.getCustomNameTag());
 					} else {
 						return -1;
 					}
 				} else {
-					if (o2.func_94056_bM()) {
+					if (o2.hasCustomNameTag()) {
 						return 1;
 					}
 				}

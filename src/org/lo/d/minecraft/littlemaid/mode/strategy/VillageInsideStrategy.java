@@ -16,6 +16,7 @@ import net.minecraft.src.LMM_EntityMode_HouseKeeper;
 import net.minecraft.src.LMM_IFF;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.village.Village;
 import net.minecraft.village.VillageDoorInfo;
 import net.minecraft.world.World;
@@ -208,6 +209,8 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 	}
 
 	private static class HKVillagerIcon extends MaidExIcon {
+		private static final ResourceLocation ICON = new ResourceLocation("house_keeper",
+				"textures/gui/icon_villager_azi.png");
 		private final VillageInsideStrategy strategy;
 
 		public HKVillagerIcon(VillageInsideStrategy strategy) {
@@ -233,8 +236,8 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 		}
 
 		@Override
-		public String getTexture() {
-			return "/gui/icon_villager_azi.png";
+		public ResourceLocation getTexture() {
+			return ICON;
 		}
 	}
 
@@ -390,7 +393,7 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 				double dist = entityPoint3DDouble.distanceToSq(center);
 				Point3D pos = center;
 				if (dist > 8 * 8) {
-					Point3D oldHome = new Point3D(maid.getHomePosition());
+					Point3D oldHome = new Point3D(maid.func_110172_bL());
 					double homeDist = oldHome.distanceToSq(center);
 					if (homeDist > 0) {
 						double d = 4 / MathHelper.sqrt_double(dist);
@@ -406,7 +409,7 @@ public class VillageInsideStrategy extends VillageStrategy.Impl {
 						}
 					}
 				}
-				maid.setHomeArea(pos.getX(), pos.getY(), pos.getZ(), maid.dimension);
+				maid.func_110171_b(pos.getX(), pos.getY(), pos.getZ(), 16);
 			}
 		}
 
